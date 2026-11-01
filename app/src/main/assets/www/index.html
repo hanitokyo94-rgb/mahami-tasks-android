@@ -510,6 +510,7 @@ function showInApp(title, body){
 $("inappX").onclick = ()=>$("inapp").classList.remove("show");
 setInterval(tick, 15000);
 document.addEventListener("visibilitychange", ()=>{ if(!document.hidden){ tick(); nativeScheduleAll(); } });
+document.addEventListener("android-perms", ()=>{ renderPerm(); nativeScheduleAll(); });
 
 /* ================= التبويبات ================= */
 let currentTab = "tasks";
@@ -652,6 +653,7 @@ function renderPerm(){
   badge.textContent = ok ? "مفعّلة" : "متوقفة";
   badge.className = "badge " + (ok ? "ok" : "off");
   sub.textContent = ok ? "التنبيهات تصلك حتى والتطبيق مغلق" : "اضغط للسماح بالإشعارات";
+  if (ok) { try { const st = native.status(); if (st) sub.textContent = st; } catch(e){} }
   try { $("exactRow").style.display = native.canScheduleExact() === "true" ? "none" : "flex"; } catch(e){ $("exactRow").style.display = "none"; }
 }
 $("permRow").onclick = ()=>{
