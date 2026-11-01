@@ -807,6 +807,19 @@ function nextTaskText(){
 }
 function nativeCancel(id){ if (native) try { native.cancel(parseInt(id,10)||0); } catch(e){} }
 
+/* إجراءات الإشعار (زر تم/تأجيل من شريط النظام) + استئناف التطبيق */
+window.__notifAction = function(action, idStr){
+  const id = String(idStr);
+  const t = state.tasks.find(x => String(x.id) === id);
+  if (action === "done" && t){ t.done = true; t.doneAt = Date.now(); save(); renderTasks(); renderReminders(); updateHero(); }
+  if (action === "snooze" && t){ t.fired = false; save(); }
+  nativeScheduleAll();
+};
+window.__appResume = function(){
+  renderTasks(); renderReminders(); renderPerm(); tick();
+  if (native) nativeScheduleAll();
+};
+
 /* ================= محرك التنبيه الداخلي ================= */
 function tick(){
   const now = Date.now();
@@ -1031,12 +1044,12 @@ function renderPerm(){
     return;
   }
   let ok = false;
-  try { ok = native.hasPermission() === "true"; } catch(e){}
+  try { ok = native.hasPermission() === true || native.hasPermission() === "true"; } catch(e){}
   badge.textContent = ok ? "مفعّلة" : "متوقفة";
   badge.className = "badge " + (ok ? "ok" : "off");
   sub.textContent = ok ? "التنبيهات تصلك حتى والتطبيق مغلق" : "اضغط للسماح بالإشعارات";
   if (ok) { try { const st = native.status(); if (st) sub.textContent = st; } catch(e){} }
-  try { $("exactRow").style.display = native.canScheduleExact() === "true" ? "none" : "flex"; } catch(e){ $("exactRow").style.display = "none"; }
+  try { const ex = native.canScheduleExact(); $("exactRow").style.display = (ex === true || ex === "true") ? "none" : "flex"; } catch(e){ $("exactRow").style.display = "none"; }
 }
 $("permRow").onclick = ()=>{
   if (!native){ toast("التنبيه الداخلي يعمل تلقائيًا هنا"); return; }

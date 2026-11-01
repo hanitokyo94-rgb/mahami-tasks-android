@@ -149,6 +149,28 @@ public class ReminderStore {
         } catch (Exception ignored) {}
     }
 
+    /** تحديث حالة المهمة في تخزين الواجهة (زر "تم" من الإشعار) */
+    public static void updateStatus(Context context, int id, String status) {
+        try {
+            SharedPreferences web = context.getSharedPreferences("tasks_app_v2", Context.MODE_PRIVATE);
+            String raw = web.getString("tasks_app_v2", null);
+            if (raw == null) return;
+            JSONObject s = new JSONObject(raw);
+            JSONArray tasks = s.optJSONArray("tasks");
+            if (tasks == null) return;
+            for (int i = 0; i < tasks.length(); i++) {
+                JSONObject t = tasks.getJSONObject(i);
+                if (t.optInt("id") == id) {
+                    t.put("done", "done".equals(status));
+                    break;
+                }
+            }
+            web.edit().putString("tasks_app_v2", s.toString()).apply();
+        } catch (Exception ex) {
+            android.util.Log.e("Mahami", "updateStatus error", ex);
+        }
+    }
+
     /** نص حالة للعرض في الإعدادات */
     public static String statusText(Context context) {
         try {
