@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121417"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="32dp">
+
+    <ImageView
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginBottom="24dp"
+        android:contentDescription="منبه"
+        android:src="@drawable/ic_notification" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="حان وقت المهمة"
+        android:textColor="#8B9499"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/alarmTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text=""
+        android:textColor="#ECEFF1"
+        android:textSize="28sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/alarmBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text=""
+        android:textColor="#8B9499"
+        android:textSize="15sp" />
+
+    <Button
+        android:id="@+id/alarmDone"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="40dp"
+        android:backgroundTint="#0E7C66"
+        android:text="تم الإنجاز ✓"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/alarmSnooze"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="#2A2F36"
+        android:text="تأجيل 10 دقائق"
+        android:textColor="#ECEFF1"
+        android:textSize="16sp" />
+</LinearLayout>
