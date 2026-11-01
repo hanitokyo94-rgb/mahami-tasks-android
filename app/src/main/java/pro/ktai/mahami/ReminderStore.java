@@ -48,7 +48,7 @@ public class ReminderStore {
                 long ts = o.getLong("ts");
                 if (ts <= System.currentTimeMillis()) continue;
                 schedule(context, am, o.getInt("id"), o.optString("title", "حان وقت المهمة"),
-                        o.optString("body", ""), ts);
+                        o.optString("body", ""), ts, o.optBoolean("alarm", false));
                 scheduled++;
             }
             android.util.Log.i("Mahami", "scheduled " + scheduled + " reminders");
@@ -78,11 +78,12 @@ public class ReminderStore {
         if (pi != null) { am.cancel(pi); pi.cancel(); }
     }
 
-    private static void schedule(Context context, AlarmManager am, int id, String title, String body, long ts) {
+    private static void schedule(Context context, AlarmManager am, int id, String title, String body, long ts, boolean alarm) {
         Intent i = new Intent(context, ReminderReceiver.class);
         i.putExtra(ReminderReceiver.EXTRA_ID, id);
         i.putExtra(ReminderReceiver.EXTRA_TITLE, title);
         i.putExtra(ReminderReceiver.EXTRA_BODY, body);
+        i.putExtra(ReminderReceiver.EXTRA_ALARM, alarm);
         PendingIntent pi = PendingIntent.getBroadcast(context, id, i,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         boolean exactAllowed = true;
@@ -111,17 +112,48 @@ public class ReminderStore {
                 long ts = o.getLong("ts");
                 if (ts <= System.currentTimeMillis()) continue;
                 schedule(context, am, o.getInt("id"), o.optString("title", "حان وقت المهمة"),
-                        o.optString("body", ""), ts);
+                        o.optString("body", ""), ts, o.optBoolean("alarm", false));
             }
         } catch (Exception ex) {
             android.util.Log.e("Mahami", "rescheduleAllFromStore error", ex);
         }
     }
 
+    /** إعادة جدولة مهمة واحدة (تأجيل من الإشعار) */
+    public static void rescheduleOne(Context context, int id, String title, String body, long ts, boolean alarm) {
+        try {
+            SharedPreferences p = prefs(context);
+            JSONArray arr = new JSONArray(p.getString(KEY, "[]"));
+            boolean found = false;
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject o = arr.getJSONObject(i);
+                if (o.getInt("id") == id) {
+                    o.put("ts", ts);
+                    o.put("alarm", alarm);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                JSONObject o = new JSONObject();
+                o.put("id", id);
+                o.put("title", title);
+                o.put("body", body);
+                o.put("ts", ts);
+                o.put("alarm", alarm);
+                arr.put(o);
+            }
+            p.edit().putString(KEY, arr.toString()).apply();
+            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            schedule(context, am, id, title, body, ts, alarm);
+        } catch (Exception ignored) {}
+    }
+
     /** نص حالة للعرض في الإعدادات */
     public static String statusText(Context context) {
         try {
-            int n = prefs(context).getString(KEY, "[]").length();            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            int n = new JSONArray(prefs(context).getString(KEY, "[]")).length();
+            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
             boolean exact = true;
             if (Build.VERSION.SDK_INT >= 31) exact = am.canScheduleExactAlarms();
             SimpleDateFormat f = new SimpleDateFormat("HH:mm", Locale.getDefault());
