@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>مهامي — مهام ومنبهات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F6F5; --card:#FFFFFF; --text:#17201D; --text-2:#66736E;
+  --border:#E4E9E7; --accent:#0E7C66; --accent-ink:#FFFFFF; --soft:#E4F3EF;
+  --danger:#D64545; --soft-danger:#FBEAEA; --warn:#B97F10; --soft-warn:#FBF3E4;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0; overscroll-behavior:none}
+body{
+  font-family:"IBM Plex Sans Arabic", system-ui, -apple-system, sans-serif;
+  background:var(--bg); color:var(--text); font-size:15px; line-height:1.6;
+}
+button{font-family:inherit; border:none; background:none; cursor:pointer; color:inherit}
+input,select,textarea{font-family:inherit; font-size:16px; color:var(--text)}
+.num{font-variant-numeric:tabular-nums; unicode-bidi:embed}
+
+/* ===== إطار الهاتف على سطح المكتب ===== */
+@media (min-width:700px){
+  body{display:grid; place-items:center; min-height:100dvh; background:#ECEDEE}
+  #app{
+    width:402px; height:min(874px,94dvh); border-radius:36px;
+    border:1px solid #D8D9DC; overflow:hidden; position:relative; background:var(--bg);
+  }
+}
+@media (max-width:699px){ #app{width:100vw; height:100dvh} }
+
+/* ===== App Bar ===== */
+.appbar{
+  height:56px; padding:0 16px; display:flex; align-items:center; gap:12px;
+  background:var(--bg); border-bottom:1px solid var(--border);
+  position:absolute; top:0; right:0; left:0; z-index:20;
+}
+.appbar h1{font-size:20px; font-weight:700; margin:0; line-height:1.2}
+.appbar .sub{font-size:12px; color:var(--text-2); font-weight:500; margin-top:-2px}
+.appbar .spacer{margin-inline-start:auto}
+
+/* ===== المحتوى ===== */
+.content{
+  position:absolute; top:56px; bottom:64px; right:0; left:0;
+  overflow-y:auto; padding:16px 16px 96px 16px;
+}
+.screen{display:none}
+.screen.active{display:block}
+
+/* ===== التبويبات السفلية ===== */
+.tabbar{
+  position:absolute; bottom:0; right:0; left:0; height:64px; z-index:20;
+  background:var(--card); border-top:1px solid var(--border);
+  display:flex; padding-bottom:env(safe-area-inset-bottom);
+}
+.tab{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:2px; font-size:11px; font-weight:600; color:var(--text-2); min-height:44px;
+  transition:color .15s;
+}
+.tab svg{width:22px; height:22px}
+.tab.active{color:var(--accent)}
+
+/* ===== بطاقة اليوم (البطل) ===== */
+.hero{
+  background:var(--accent); color:var(--accent-ink); border-radius:16px;
+  padding:20px; margin-bottom:16px;
+}
+.hero .label{font-size:13px; font-weight:500; opacity:.85}
+.hero .big{font-size:40px; font-weight:800; line-height:1.15; margin-top:2px}
+.hero .meta{font-size:13px; opacity:.85; margin-top:2px}
+.hero .track{height:4px; background:rgba(255,255,255,.25); border-radius:999px; margin-top:14px}
+.hero .fill{height:4px; background:#fff; border-radius:999px; transition:width .3s}
+
+/* ===== أقسام القائمة ===== */
+.section-h{
+  display:flex; align-items:center; gap:8px; margin:20px 2px 8px;
+  font-size:13px; font-weight:700; color:var(--text-2);
+}
+.section-h .count{
+  background:var(--soft); color:var(--accent); border-radius:999px;
+  min-width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700; padding:0 7px;
+}
+.section-h .count.red{background:var(--soft-danger); color:var(--danger)}
+.section-h .count.gray{background:#EEF0EF; color:var(--text-2)}
+.section-h .chev{margin-inline-start:auto; transition:transform .15s}
+.section-h.collapsed .chev{transform:rotate(180deg)}
+
+/* ===== صف المهمة ===== */
+.task{
+  display:flex; align-items:flex-start; gap:12px; padding:14px 16px;
+  background:var(--card); border-radius:16px; margin-bottom:8px;
+  border:1px solid var(--border); transition:background-color .15s;
+}
+.task:active{background:#F0F1F3}
+.task .check{
+  width:24px; height:24px; border-radius:8px; border:2px solid #C6CDC9;
+  flex-shrink:0; margin-top:2px; display:flex; align-items:center; justify-content:center;
+  transition:background-color .15s, border-color .15s;
+}
+.task.done .check{background:var(--accent); border-color:var(--accent)}
+.task .check svg{width:14px; height:14px; color:#fff; opacity:0}
+.task.done .check svg{opacity:1}
+.task .body{flex:1; min-width:0}
+.task .title{font-size:16px; font-weight:600; line-height:1.4}
+.task.done .title{color:var(--text-2); text-decoration:line-through}
+.task .sub{font-size:13px; color:var(--text-2); display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:2px}
+.task .sub .dot{width:3px; height:3px; border-radius:50%; background:#C6CDC9}
+.task .bell{display:inline-flex; align-items:center; gap:3px; color:var(--accent); font-weight:600}
+.task .bell svg{width:13px; height:13px}
+.task .bell.late{color:var(--danger)}
+.prio{width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:9px}
+.prio.p1{background:#C6CDC9} .prio.p2{background:#E0A422} .prio.p3{background:var(--danger)}
+.chip{
+  font-size:11px; font-weight:600; border-radius:999px; padding:1px 8px;
+}
+.chip.red{background:var(--soft-danger); color:var(--danger)}
+.chip.amber{background:var(--soft-warn); color:var(--warn)}
+
+/* ===== FAB ===== */
+.fab{
+  position:absolute; bottom:80px; inset-inline-start:16px; width:56px; height:56px;
+  border-radius:50%; background:var(--accent); color:#fff; z-index:15;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 12px rgba(14,124,102,.35);
+}
+.fab svg{width:26px; height:26px}
+.fab:active{filter:brightness(.92)}
+
+/* ===== Bottom Sheet ===== */
+.overlay{
+  position:absolute; inset:0; background:rgba(0,0,0,.35); z-index:30;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.overlay.show{opacity:1; pointer-events:auto}
+.sheet{
+  position:absolute; right:0; left:0; bottom:0; z-index:31;
+  background:var(--card); border-radius:20px 20px 0 0;
+  max-height:78%; overflow-y:auto; padding:8px 20px calc(20px + env(safe-area-inset-bottom));
+  transform:translateY(100%); transition:transform .2s;
+}
+.sheet.show{transform:translateY(0)}
+.sheet .grip{width:36px; height:4px; border-radius:999px; background:#D8D9DC; margin:8px auto 16px}
+.sheet h2{font-size:17px; font-weight:700; margin:0 0 16px}
+.field{margin-bottom:14px}
+.field label{display:block; font-size:13px; font-weight:600; color:var(--text-2); margin-bottom:6px}
+.field input[type=text], .field textarea, .field input[type=date], .field input[type=time], .field select{
+  width:100%; border:1px solid var(--border); border-radius:12px; padding:12px 14px;
+  background:var(--bg); outline:none;
+}
+.field input:focus, .field textarea:focus, .field select:focus{border-color:var(--accent)}
+.field textarea{resize:none; height:72px}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.switchrow{
+  display:flex; align-items:center; gap:12px; padding:12px 14px;
+  background:var(--bg); border:1px solid var(--border); border-radius:12px;
+}
+.switchrow .txt{flex:1}
+.switchrow .txt b{font-size:15px; font-weight:600; display:block}
+.switchrow .txt span{font-size:12px; color:var(--text-2)}
+.sw{position:relative; width:46px; height:28px; flex-shrink:0}
+.sw input{opacity:0; width:100%; height:100%; position:absolute; margin:0; cursor:pointer}
+.sw .knob{
+  position:absolute; inset:0; background:#D8D9DC; border-radius:999px; transition:background-color .15s;
+}
+.sw .knob::after{
+  content:""; position:absolute; top:3px; inset-inline-start:3px; width:22px; height:22px;
+  background:#fff; border-radius:50%; transition:transform .15s;
+}
+.sw input:checked + .knob{background:var(--accent)}
+.sw input:checked + .knob::after{transform:translateX(-18px)}
+.btn{
+  width:100%; height:50px; border-radius:12px; background:var(--accent); color:#fff;
+  font-size:16px; font-weight:600; transition:filter .15s;
+}
+.btn:active{filter:brightness(.92)}
+.btn.ghost{background:var(--soft); color:var(--accent)}
+.btn.danger-ghost{background:none; color:var(--danger); font-size:14px; font-weight:600; height:44px}
+.btn:disabled{opacity:.45}
+
+/* ===== صفوف الإعدادات والمنبهات ===== */
+.card{background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; margin-bottom:16px}
+.row{
+  display:flex; align-items:center; gap:12px; padding:14px 16px; min-height:56px;
+  border-bottom:1px solid var(--border); width:100%; text-align:right;
+}
+.row:last-child{border-bottom:none}
+.row:active{background:#F0F1F3}
+.row .ic{
+  width:40px; height:40px; border-radius:12px; background:var(--soft); color:var(--accent);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.row .ic svg{width:20px; height:20px}
+.row .txt{flex:1; min-width:0}
+.row .txt b{font-size:15px; font-weight:600; display:block}
+.row .txt span{font-size:12px; color:var(--text-2)}
+.row .chev{color:var(--text-2)}
+.badge{
+  font-size:11px; font-weight:700; border-radius:999px; padding:3px 10px;
+}
+.badge.ok{background:var(--soft); color:var(--accent)}
+.badge.off{background:#EEF0EF; color:var(--text-2)}
+.badge.warn{background:var(--soft-warn); color:var(--warn)}
+
+/* صف منبه */
+.alarm{
+  display:flex; align-items:center; gap:14px; padding:14px 16px;
+  background:var(--card); border:1px solid var(--border); border-radius:16px; margin-bottom:8px;
+}
+.alarm .time{font-size:22px; font-weight:800; color:var(--accent); line-height:1.1; min-width:74px}
+.alarm .time small{display:block; font-size:11px; font-weight:600; color:var(--text-2)}
+.alarm .t{flex:1; min-width:0}
+.alarm .t b{font-size:15px; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.alarm .t span{font-size:12px; color:var(--text-2)}
+.alarm .cd{font-size:11px; font-weight:700; background:var(--soft); color:var(--accent); border-radius:999px; padding:3px 10px; white-space:nowrap}
+
+/* ===== فراغ إبداعي ===== */
+.empty{text-align:center; padding:48px 24px}
+.empty .circ{
+  width:88px; height:88px; border-radius:50%; background:var(--soft); color:var(--accent);
+  display:flex; align-items:center; justify-content:center; margin:0 auto 16px;
+}
+.empty .circ svg{width:38px; height:38px}
+.empty h3{font-size:17px; font-weight:700; margin:0 0 4px}
+.empty p{font-size:13px; color:var(--text-2); margin:0 0 20px}
+.empty .btn{width:auto; padding:0 24px; display:inline-flex; align-items:center; height:44px}
+
+/* ===== بانر التنبيه الداخلي ===== */
+.inapp{
+  position:absolute; top:10px; right:10px; left:10px; z-index:50;
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:14px 16px; display:flex; gap:12px; align-items:flex-start;
+  box-shadow:0 -4px 16px rgba(0,0,0,.08);
+  transform:translateY(-130%); transition:transform .25s;
+}
+.inapp.show{transform:translateY(0)}
+.inapp .ic{width:40px; height:40px; border-radius:12px; background:var(--soft); color:var(--accent); display:flex; align-items:center; justify-content:center; flex-shrink:0}
+.inapp b{font-size:14px; font-weight:700; display:block}
+.inapp span{font-size:12px; color:var(--text-2)}
+.inapp .x{color:var(--text-2); padding:4px}
+
+/* توست صغير */
+.toast{
+  position:absolute; bottom:84px; right:16px; left:16px; z-index:40;
+  background:var(--text); color:#fff; border-radius:12px; padding:12px 16px;
+  font-size:13px; font-weight:600; text-align:center;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.toast.show{opacity:.95}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- App Bar -->
+  <div class="appbar">
+    <div>
+      <h1 id="barTitle">مهامي</h1>
+      <div class="sub" id="barSub"></div>
+    </div>
+    <div class="spacer"></div>
+  </div>
+
+  <!-- المحتوى -->
+  <div class="content">
+
+    <!-- شاشة المهام -->
+    <section class="screen active" id="screen-tasks">
+      <div class="hero" id="hero">
+        <div class="label">مهام اليوم</div>
+        <div class="big num" id="heroNum">0</div>
+        <div class="meta" id="heroMeta"></div>
+        <div class="track"><div class="fill" id="heroFill" style="width:0%"></div></div>
+      </div>
+      <div id="tasksList"></div>
+    </section>
+
+    <!-- شاشة المنبهات -->
+    <section class="screen" id="screen-reminders">
+      <div id="remindersList"></div>
+    </section>
+
+    <!-- شاشة الإعدادات -->
+    <section class="screen" id="screen-settings">
+      <div class="card">
+        <button class="row" id="permRow">
+          <div class="ic" id="permIc"></div>
+          <div class="txt"><b>إشعارات النظام</b><span id="permSub">حالة الإذن</span></div>
+          <span class="badge off" id="permBadge">—</span>
+        </button>
+        <button class="row" id="exactRow" style="display:none">
+          <div class="ic" id="exactIc"></div>
+          <div class="txt"><b>المنبه الدقيق</b><span>لضمان وصول التنبيه بالوقت المحدد تمامًا</span></div>
+          <span class="chev">‹</span>
+        </button>
+        <button class="row" id="testRow">
+          <div class="ic" id="testIc"></div>
+          <div class="txt"><b>جرّب التنبيه الآن</b><span>إشعار تجريبي يظهر فورًا</span></div>
+          <span class="chev">‹</span>
+        </button>
+      </div>
+      <div class="card">
+        <div class="row" style="cursor:default">
+          <div class="ic" id="sndIc"></div>
+          <div class="txt"><b>صوت التنبيه</b><span>نغمة عند ظهور التنبيه</span></div>
+          <label class="sw"><input type="checkbox" id="swSound" checked><span class="knob"></span></label>
+        </div>
+        <div class="row" style="cursor:default">
+          <div class="ic" id="vibIc"></div>
+          <div class="txt"><b>الاهتزاز</b><span>اهتزاز الجهاز مع التنبيه</span></div>
+          <label class="sw"><input type="checkbox" id="swVibrate" checked><span class="knob"></span></label>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row" style="cursor:default">
+          <div class="ic" id="infoIc"></div>
+          <div class="txt"><b>حول التطبيق</b><span>مهامي v1.0 · بياناتك محفوظة على جهازك فقط</span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" id="fab" aria-label="مهمة جديدة">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+
+  <!-- التبويبات -->
+  <nav class="tabbar">
+    <button class="tab active" data-tab="tasks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8.5 12 2.5 2.5 5-5"/></svg>
+      المهام
+    </button>
+    <button class="tab" data-tab="reminders">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      المنبهات
+    </button>
+    <button class="tab" data-tab="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 3.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H8a1.65 1.65 0 0 0 1-1.51V2a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H22a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      الإعدادات
+    </button>
+  </nav>
+
+  <!-- بانر التنبيه الداخلي -->
+  <div class="inapp" id="inapp">
+    <div class="ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+    </div>
+    <div style="flex:1; min-width:0">
+      <b id="inappTitle">حان وقت المهمة</b>
+      <span id="inappBody"></span>
+    </div>
+    <button class="x" id="inappX">✕</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Overlay + Sheet -->
+  <div class="overlay" id="overlay"></div>
+  <div class="sheet" id="sheet">
+    <div class="grip"></div>
+    <h2 id="sheetTitle">مهمة جديدة</h2>
+    <div class="field">
+      <label>عنوان المهمة</label>
+      <input type="text" id="fTitle" placeholder="مثال: مكالمة مع أحمد" maxlength="80">
+    </div>
+    <div class="field">
+      <label>ملاحظات (اختياري)</label>
+      <textarea id="fNotes" placeholder="تفاصيل إضافية…"></textarea>
+    </div>
+    <div class="grid2 field">
+      <div>
+        <label>التاريخ</label>
+        <input type="date" id="fDate">
+      </div>
+      <div>
+        <label>الوقت</label>
+        <input type="time" id="fTime">
+      </div>
+    </div>
+    <div class="field">
+      <div class="switchrow">
+        <div class="txt"><b>تنبيه قبل الموعد</b><span>إشعار يصلك حتى والتطبيق مغلق</span></div>
+        <label class="sw"><input type="checkbox" id="fRemind" checked><span class="knob"></span></label>
+      </div>
+    </div>
+    <div class="field" id="offsetWrap">
+      <label>وقت التنبيه</label>
+      <select id="fOffset">
+        <option value="0">عند الموعد تمامًا</option>
+        <option value="5">قبل الموعد بـ 5 دقائق</option>
+        <option value="15" selected>قبل الموعد بـ 15 دقيقة</option>
+        <option value="30">قبل الموعد بـ 30 دقيقة</option>
+        <option value="60">قبل الموعد بساعة</option>
+        <option value="1440">قبل الموعد بيوم</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>الأهمية</label>
+      <div class="grid2" style="grid-template-columns:1fr 1fr 1fr">
+        <button class="btn ghost prioBtn" data-p="1" style="height:42px; font-size:14px">عادي</button>
+        <button class="btn ghost prioBtn" data-p="2" style="height:42px; font-size:14px">مهم</button>
+        <button class="btn ghost prioBtn" data-p="3" style="height:42px; font-size:14px">عاجل</button>
+      </div>
+    </div>
+    <button class="btn" id="saveBtn">حفظ المهمة</button>
+    <button class="btn danger-ghost" id="delBtn" style="display:none">حذف المهمة</button>
+  </div>
+</div>
+
+<script>
+/* ================= الحالة والتخزين ================= */
+const LS_KEY = "tasks_app_v1";
+let state = { tasks: [], settings: { sound: true, vibrate: true } };
+try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s && s.tasks) state = s; } catch(e){}
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+const native = window.AndroidNotifications || null; // جسر أندرويد (يُحقن داخل الـ APK)
+
+/* ================= أدوات ================= */
+const $ = id => document.getElementById(id);
+const DAYS = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+const MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function parseDT(date, time){ return new Date(date+"T"+(time||"00:00")+":00"); }
+function fmtDate(dateStr){
+  const d = parseDT(dateStr, "00:00"); const t = todayStr();
+  if (dateStr === t) return "اليوم";
+  const tm = new Date(); tm.setDate(tm.getDate()+1);
+  const tmStr = tm.getFullYear()+"-"+String(tm.getMonth()+1).padStart(2,"0")+"-"+String(tm.getDate()).padStart(2,"0");
+  if (dateStr === tmStr) return "غدًا";
+  return DAYS[d.getDay()]+" "+d.getDate()+" "+MONTHS[d.getMonth()];
+}
+function fmtTime(time){
+  if (!time) return "";
+  const [h,m] = time.split(":").map(Number);
+  const period = h < 12 ? "ص" : "م";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return h12+":"+String(m).padStart(2,"0")+" "+period;
+}
+function fmtCountdown(ms){
+  if (ms < 0) ms = 0;
+  const mins = Math.floor(ms/60000), h = Math.floor(mins/60), d = Math.floor(h/24);
+  if (d > 0) return "بعد "+d+" ي و"+(h%24)+" س";
+  if (h > 0) return "بعد "+h+" س و"+(mins%60)+" د";
+  if (mins > 0) return "بعد "+mins+" د";
+  return "الآن";
+}
+function reminderAt(t){ return parseDT(t.date, t.time).getTime() - (t.offset||0)*60000; }
+function toast(msg){ const el=$("toast"); el.textContent=msg; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),2200); }
+
+/* صوت + اهتزاز (بديل داخلي) */
+let audioCtx = null;
+function beep(){
+  if (!state.settings.sound) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const t = audioCtx.currentTime;
+    [[880,0],[660,.18],[880,.36]].forEach(([f,off])=>{
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.frequency.value = f; o.type = "sine";
+      g.gain.setValueAtTime(.001, t+off);
+      g.gain.exponentialRampToValueAtTime(.25, t+off+.02);
+      g.gain.exponentialRampToValueAtTime(.001, t+off+.16);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t+off); o.stop(t+off+.18);
+    });
+  } catch(e){}
+}
+function vibrate(){ if (state.settings.vibrate && navigator.vibrate) navigator.vibrate([250,120,250]); }
+
+/* ================= الجسر مع أندرويد ================= */
+function nativeScheduleAll(){
+  if (!native) return;
+  const now = Date.now();
+  const list = state.tasks
+    .filter(t => !t.done && t.time && t.remind && reminderAt(t) > now)
+    .map(t => ({ id: parseInt(t.id,10)||0, title: t.title, body: (t.notes||"") + " · " + fmtDate(t.date) + " " + fmtTime(t.time), ts: reminderAt(t) }));
+  try { native.rescheduleAll(JSON.stringify(list)); } catch(e){}
+}
+function nativeCancel(id){ if (native) try { native.cancel(parseInt(id,10)||0); } catch(e){} }
+
+/* ================= محرك التنبيه الداخلي ================= */
+function tick(){
+  const now = Date.now();
+  let changed = false;
+  state.tasks.forEach(t => {
+    if (t.done || !t.time || !t.remind || t.fired) return;
+    if (reminderAt(t) <= now){
+      t.fired = true; changed = true;
+      showInApp(t.title, (t.notes? t.notes+" · ":"") + fmtDate(t.date)+" "+fmtTime(t.time));
+      beep(); vibrate();
+    }
+  });
+  if (changed) save();
+  renderReminders();
+}
+function showInApp(title, body){
+  $("inappTitle").textContent = "حان وقت: "+title;
+  $("inappBody").textContent = body||"";
+  $("inapp").classList.add("show");
+  clearTimeout($("inapp")._t);
+  $("inapp")._t = setTimeout(()=>$("inapp").classList.remove("show"), 7000);
+}
+$("inappX").onclick = ()=>$("inapp").classList.remove("show");
+setInterval(tick, 15000);
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden){ tick(); nativeScheduleAll(); } });
+
+/* ================= التبويبات ================= */
+let currentTab = "tasks";
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.onclick = ()=>{
+    currentTab = btn.dataset.tab;
+    document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active", b===btn));
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    $("screen-"+currentTab).classList.add("active");
+    $("fab").style.display = currentTab==="tasks" ? "flex" : "none";
+    $("barTitle").textContent = {tasks:"مهامي", reminders:"المنبهات", settings:"الإعدادات"}[currentTab];
+    $("barSub").textContent = currentTab==="tasks" ? fullToday() : "";
+    if (currentTab==="reminders") renderReminders();
+    if (currentTab==="settings") renderPerm();
+  };
+});
+function fullToday(){
+  const d = new Date();
+  return DAYS[d.getDay()]+" "+d.getDate()+" "+MONTHS[d.getMonth()]+" "+d.getFullYear();
+}
+
+/* ================= عرض المهام ================= */
+let collapsed = { done:true };
+function prioName(p){ return {1:"عادي",2:"مهم",3:"عاجل"}[p]||"عادي"; }
+function renderTasks(){
+  const t0 = todayStr();
+  const late = state.tasks.filter(t=>!t.done && t.date < t0).sort((a,b)=> (a.date+a.time).localeCompare(b.date+b.time));
+  const today = state.tasks.filter(t=>!t.done && t.date === t0).sort((a,b)=> (a.time||"99").localeCompare(b.time||"99"));
+  const upcoming = state.tasks.filter(t=>!t.done && t.date > t0).sort((a,b)=> (a.date+a.time).localeCompare(b.date+b.time));
+  const done = state.tasks.filter(t=>t.done).sort((a,b)=> (b.date+b.time).localeCompare(a.date+a.time));
+
+  // بطاقة اليوم
+  const todayAll = state.tasks.filter(t=>t.date===t0);
+  const doneToday = todayAll.filter(t=>t.done).length;
+  $("heroNum").textContent = today.length;
+  $("heroMeta").textContent = todayAll.length ? ("أنجزت "+doneToday+" من "+todayAll.length+" مهام اليوم") : "لا مهام مجدولة لليوم — أضف أول مهمة";
+  $("heroFill").style.width = (todayAll.length ? Math.round(doneToday/todayAll.length*100) : 0)+"%";
+
+  const list = $("tasksList");
+  list.innerHTML = "";
+  const sec = (title, arr, cls, key)=>{
+    if (!arr.length) return;
+    const h = document.createElement("div");
+    h.className = "section-h"+(collapsed[key]?" collapsed":"");
+    h.innerHTML = '<span>'+title+'</span><span class="count '+cls+' num">'+arr.length+'</span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>';
+    h.onclick = ()=>{ collapsed[key]=!collapsed[key]; renderTasks(); };
+    list.appendChild(h);
+    if (collapsed[key]) return;
+    arr.forEach(t=> list.appendChild(taskRow(t)) );
+  };
+  sec("متأخرة", late, "red", "late");
+  sec("اليوم", today, "", "today");
+  sec("قادمة", upcoming, "gray", "upcoming");
+  sec("مكتملة", done, "gray", "done");
+
+  if (!state.tasks.length){
+    list.innerHTML = '<div class="empty"><div class="circ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8.5 12 2.5 2.5 5-5"/></svg></div><h3>ابدأ أول مهمة</h3><p>مهمة صغيرة بوقت محدد = تنبيه يوصلك بالوقت</p><button class="btn" onclick="openSheet()">+ مهمة جديدة</button></div>';
+  }
+}
+function taskRow(t){
+  const el = document.createElement("div");
+  el.className = "task"+(t.done?" done":"");
+  const rAt = t.time && t.remind ? reminderAt(t) : 0;
+  const isLateRem = rAt && rAt < Date.now() && !t.done;
+  let sub = '<span>'+fmtDate(t.date)+'</span>';
+  if (t.time) sub += '<span class="dot"></span><span class="num">'+fmtTime(t.time)+'</span>';
+  if (t.time && t.remind) sub += '<span class="dot"></span><span class="bell'+(isLateRem?" late":"")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>'+(t.offset? "قبل بـ "+offsetLabel(t.offset) : "تنبيه")+'</span>';
+  if (t.prio > 1) sub += '<span class="dot"></span><span class="chip '+(t.prio===3?"red":"amber")+'">'+prioName(t.prio)+'</span>';
+  el.innerHTML =
+    '<button class="check" aria-label="إنجاز"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></button>'+
+    '<div class="body"><div class="title"></div><div class="sub">'+sub+'</div></div>'+
+    '<div class="prio p'+(t.prio||1)+'"></div>';
+  el.querySelector(".title").textContent = t.title;
+  el.querySelector(".check").onclick = (e)=>{ e.stopPropagation(); toggleDone(t.id); };
+  el.onclick = ()=> openSheet(t.id);
+  return el;
+}
+function offsetLabel(m){ return {5:"5 د",15:"15 د",30:"30 د",60:"ساعة",1440:"يوم"}[m]||m+" د"; }
+function toggleDone(id){
+  const t = state.tasks.find(x=>x.id===id); if (!t) return;
+  t.done = !t.done;
+  if (t.done){ nativeCancel(id); toast("أحسنت ✓"); }
+  else { t.fired = false; }
+  save(); nativeScheduleAll(); renderTasks(); renderReminders();
+}
+
+/* ================= عرض المنبهات ================= */
+function renderReminders(){
+  const now = Date.now();
+  const up = state.tasks
+    .filter(t=>!t.done && t.time && t.remind)
+    .map(t=>({t, at:reminderAt(t)}))
+    .filter(x=>x.at > now - 3600000)
+    .sort((a,b)=>a.at-b.at);
+  const el = $("remindersList");
+  if (!up.length){
+    el.innerHTML = '<div class="empty"><div class="circ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div><h3>لا منبهات قادمة</h3><p>أضف مهمة وحدد لها وقتًا وسيصلك تنبيه بالوقت</p><button class="btn" onclick="openSheet()">+ مهمة جديدة</button></div>';
+    return;
+  }
+  el.innerHTML = "";
+  up.forEach(({t,at})=>{
+    const d = new Date(at);
+    const hh = d.getHours(), mm = String(d.getMinutes()).padStart(2,"0");
+    const h12 = hh%12===0?12:hh%12;
+    const div = document.createElement("div");
+    div.className = "alarm";
+    div.innerHTML =
+      '<div class="time num">'+h12+":"+mm+'<small>'+(hh<12?"صباحًا":"مساءً")+'</small></div>'+
+      '<div class="t"><b></b><span>'+fmtDate(t.date)+' · موعد المهمة '+fmtTime(t.time)+'</span></div>'+
+      '<span class="cd num">'+(at<=now?"الآن":fmtCountdown(at-now))+'</span>';
+    div.querySelector(".t b").textContent = t.title;
+    div.onclick = ()=> openSheet(t.id);
+    el.appendChild(div);
+  });
+}
+
+/* ================= الإعدادات ================= */
+const ICONS = {
+  bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+  shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+  vol:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>',
+  vib:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M4 8v8M20 8v8"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>'
+};
+$("permIc").innerHTML = ICONS.shield; $("exactIc").innerHTML = ICONS.clock;
+$("testIc").innerHTML = ICONS.bell; $("sndIc").innerHTML = ICONS.vol;
+$("vibIc").innerHTML = ICONS.vib; $("infoIc").innerHTML = ICONS.info;
+
+function renderPerm(){
+  const badge = $("permBadge"), sub = $("permSub");
+  if (!native){
+    badge.textContent = "داخلي"; badge.className = "badge warn";
+    sub.textContent = "داخل المتصفح: تنبيه داخلي بالصوت والاهتزاز";
+    $("exactRow").style.display = "none";
+    return;
+  }
+  let ok = false;
+  try { ok = native.hasPermission() === "true"; } catch(e){}
+  badge.textContent = ok ? "مفعّلة" : "متوقفة";
+  badge.className = "badge " + (ok ? "ok" : "off");
+  sub.textContent = ok ? "التنبيهات تصلك حتى والتطبيق مغلق" : "اضغط للسماح بالإشعارات";
+  try { $("exactRow").style.display = native.canScheduleExact() === "true" ? "none" : "flex"; } catch(e){ $("exactRow").style.display = "none"; }
+}
+$("permRow").onclick = ()=>{
+  if (!native){ toast("التنبيه الداخلي يعمل تلقائيًا هنا"); return; }
+  try {
+    native.requestPermission();
+    setTimeout(()=>{ renderPerm(); nativeScheduleAll(); toast("تم تحديث حالة الإشعارات"); }, 1200);
+  } catch(e){}
+};
+$("exactRow").onclick = ()=>{ if (native) try { native.requestExactAlarm(); } catch(e){} };
+$("testRow").onclick = ()=>{
+  if (native){ try { native.test(); return; } catch(e){} }
+  showInApp("تنبيه تجريبي", "هكذا سيظهر التنبيه عند حلول وقت المهمة");
+  beep(); vibrate();
+};
+$("swSound").checked = state.settings.sound;
+$("swVibrate").checked = state.settings.vibrate;
+$("swSound").onchange = e=>{ state.settings.sound = e.target.checked; save(); };
+$("swVibrate").onchange = e=>{ state.settings.vibrate = e.target.checked; save(); };
+
+/* ================= شاشة الإضافة/التعديل ================= */
+let editingId = null, curPrio = 1, delArmed = false;
+window.openSheet = function(id){
+  editingId = id || null; delArmed = false;
+  $("delBtn").style.display = "none"; $("delBtn").textContent = "حذف المهمة";
+  $("sheetTitle").textContent = id ? "تعديل المهمة" : "مهمة جديدة";
+  const t = id ? state.tasks.find(x=>x.id===id) : null;
+  $("fTitle").value = t? t.title : "";
+  $("fNotes").value = t? (t.notes||"") : "";
+  $("fDate").value = t? t.date : todayStr();
+  $("fTime").value = t? (t.time||"") : "";
+  $("fRemind").checked = t? !!t.remind : true;
+  $("fOffset").value = t? String(t.offset||15) : "15";
+  curPrio = t? (t.prio||1) : 1;
+  syncPrioBtns(); syncOffset();
+  $("overlay").classList.add("show"); $("sheet").classList.add("show");
+  setTimeout(()=>$("fTitle").focus(), 250);
+};
+function closeSheet(){ $("overlay").classList.remove("show"); $("sheet").classList.remove("show"); }
+$("overlay").onclick = closeSheet;
+$("fab").onclick = ()=>openSheet();
+function syncPrioBtns(){
+  document.querySelectorAll(".prioBtn").forEach(b=>{
+    const sel = +b.dataset.p === curPrio;
+    b.style.background = sel ? "var(--soft)" : "transparent";
+    b.style.color = sel ? "var(--accent)" : "var(--text-2)";
+    b.style.border = sel ? "1.5px solid var(--accent)" : "1.5px solid var(--border)";
+  });
+}
+document.querySelectorAll(".prioBtn").forEach(b=> b.onclick = ()=>{ curPrio = +b.dataset.p; syncPrioBtns(); });
+function syncOffset(){ $("offsetWrap").style.display = $("fRemind").checked ? "block" : "none"; }
+$("fRemind").onchange = syncOffset;
+
+$("saveBtn").onclick = ()=>{
+  const title = $("fTitle").value.trim();
+  if (!title){ $("fTitle").focus(); toast("اكتب عنوان المهمة أولًا"); return; }
+  const date = $("fDate").value || todayStr();
+  const time = $("fTime").value;
+  const remind = $("fRemind").checked && !!time;
+  if (remind && !native){
+    const at = parseDT(date,time).getTime() - (+$("fOffset").value)*60000;
+    if (at <= Date.now()) toast("تنبيه: الوقت المحدد فات — لن يصلك إشعار له");
+  }
+  if (editingId){
+    const t = state.tasks.find(x=>x.id===editingId);
+    Object.assign(t, { title, notes:$("fNotes").value.trim(), date, time, remind, offset:+$("fOffset").value, prio:curPrio, fired:false });
+  } else {
+    state.tasks.push({ id:String(Date.now()).slice(-9), title, notes:$("fNotes").value.trim(), date, time, remind, offset:+$("fOffset").value, prio:curPrio, done:false, fired:false, createdAt:Date.now() });
+  }
+  save(); nativeScheduleAll(); renderTasks(); renderReminders(); closeSheet();
+  toast(remind && time ? "تم الحفظ — سيصلك تنبيه بالوقت 🔔" : "تم حفظ المهمة");
+};
+$("delBtn").onclick = ()=>{
+  if (!delArmed){ delArmed = true; $("delBtn").textContent = "اضغط مرة أخرى للتأكيد"; return; }
+  const t = state.tasks.find(x=>x.id===editingId);
+  state.tasks = state.tasks.filter(x=>x.id!==editingId);
+  if (t) nativeCancel(t.id);
+  save(); nativeScheduleAll(); renderTasks(); renderReminders(); closeSheet();
+  toast("حُذفت المهمة");
+};
+
+/* ================= الإقلاع ================= */
+$("barSub").textContent = fullToday();
+renderTasks(); renderReminders(); renderPerm();
+tick();
+if (native){
+  // طلب الإذن أول مرة + جدولة كل المنبهات على مستوى النظام
+  setTimeout(()=>{
+    try { if (native.hasPermission() === "false") native.requestPermission(); } catch(e){}
+    nativeScheduleAll();
+  }, 800);
+}
+</script>
+</body>
+</html>
